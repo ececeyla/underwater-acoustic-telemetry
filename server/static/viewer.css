@@ -1,0 +1,242 @@
+:root {
+  --bg: #0f1420;
+  --panel: #161d2e;
+  --border: #2a3550;
+  --text: #e7ecf7;
+  --muted: #8b97b8;
+  --accent: #4da3ff;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: -apple-system, "Segoe UI", Arial, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+}
+
+header {
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+header h1 {
+  font-size: 18px;
+  margin: 0;
+}
+
+#status-bar {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.badge {
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.badge-muted { background: #2a3550; color: var(--muted); }
+.badge-ok { background: #1e4d3a; color: #6fe3a5; }
+.badge-warn { background: #4d3a1e; color: #f0b35c; }
+
+#controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  align-items: center;
+  padding: 10px 20px;
+  border-bottom: 1px solid var(--border);
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.control {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.control input[type="number"] {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: 6px;
+  padding: 2px 6px;
+}
+
+.button-link {
+  color: var(--accent);
+  text-decoration: none;
+  border: 1px solid var(--accent);
+  border-radius: 6px;
+  padding: 4px 10px;
+}
+.button-link:hover { background: rgba(77, 163, 255, 0.12); }
+
+#formulas {
+  margin: 0 12px 12px 12px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 16px;
+  font-size: 13px;
+  color: var(--muted);
+}
+#formulas summary {
+  cursor: pointer;
+  color: var(--text);
+  font-weight: 600;
+}
+.formulas-body { margin-top: 10px; line-height: 1.5; }
+.formulas-body pre {
+  background: #0b1220;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 8px 12px;
+  color: var(--text);
+  overflow-x: auto;
+}
+.formulas-body code { background: #0b1220; padding: 1px 5px; border-radius: 4px; }
+
+main {
+  display: flex;
+  gap: 12px;
+  padding: 12px;
+  height: calc(100vh - 260px);
+  min-height: 420px;
+}
+
+#panel-map, #panel-3d {
+  flex: 1;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+}
+
+#panel-map h2, #panel-3d h2 {
+  font-size: 13px;
+  margin: 0 0 8px 0;
+  color: var(--muted);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+#map, #scene3d {
+  flex: 1;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #0b1220;
+}
+
+#node-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 10px;
+  padding: 0 12px 12px 12px;
+}
+
+.node-card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 14px;
+}
+
+.node-card h3 {
+  font-size: 13px;
+  margin: 0 0 6px 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.node-card .dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.node-card .line {
+  margin: 2px 0;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.node-card .value {
+  color: var(--text);
+  font-weight: 500;
+}
+
+.node-card.stale {
+  opacity: 0.55;
+}
+
+.leaflet-popup-content { font-size: 12px; }
+
+#panel-table {
+  margin: 0 12px 12px 12px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 16px;
+}
+
+#panel-table h2 {
+  font-size: 13px;
+  margin: 0 0 10px 0;
+  color: var(--muted);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.table-container {
+  max-height: 250px;
+  overflow-y: auto;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+}
+
+#triads-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+  text-align: left;
+}
+
+#triads-table th {
+  background: #0b1220;
+  color: var(--muted);
+  padding: 8px 10px;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  border-bottom: 1px solid var(--border);
+}
+
+#triads-table td {
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--border);
+  color: var(--text);
+  font-variant-numeric: tabular-nums; /* Alinea los números para que sea fácil leerlos */
+}
+
+#triads-table tbody tr:hover {
+  background: rgba(77, 163, 255, 0.05);
+}
