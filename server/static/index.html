@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Visor de nodos de superficie</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<link rel="stylesheet" href="/viewer.css">
+</head>
+<body>
+<header>
+  <h1>Visor de nodos de superficie</h1>
+  <div id="status-bar">
+    <span id="last-update">Sin datos todavía…</span>
+    <span id="target-status" class="badge badge-muted">Objetivo sumergido: sin datos</span>
+    <span id="imported-legend" class="badge" style="background:#0d3b36;color:#1abc9c;display:none">
+      ── Línea turquesa: trayectoria importada
+    </span>
+  </div>
+</header>
+
+<section id="controls">
+  <label class="control">
+    <input type="checkbox" id="sync-enabled" checked>
+    Limitar por tiempo entre pings de A/B/C
+  </label>
+  <label class="control">
+    Ventana:
+    <input type="number" id="sync-seconds" value="30" min="0" step="1" style="width:60px"> s
+  </label>
+  <label class="control">
+    Rango máximo plausible:
+    <input type="number" id="max-range" value="200" min="1" step="1" style="width:70px"> m
+  </label>
+  <label class="control">
+    Profundidad conocida del vehículo:
+    <input type="number" id="known-depth" placeholder="desconocida" min="0" step="0.1" style="width:70px"> m
+  </label>
+  <a id="download-csv" class="control button-link" href="/export.csv" download>Descargar CSV del histórico</a>
+  <label class="control">
+    Importar trayectoria (JSON):
+    <input type="file" id="import-trajectory" accept="application/json,.json">
+  </label>
+  <a id="clear-imported" class="control button-link" href="#" style="display:none">Quitar trayectoria importada</a>
+</section>
+
+<main>
+  <section id="panel-map">
+    <h2>Mapa (trayectorias)</h2>
+    <div id="map"></div>
+  </section>
+
+  <section id="panel-3d">
+    <h2>Escena 3D</h2>
+    <div id="scene3d"></div>
+  </section>
+</main>
+<section id="panel-table">
+  <h2>Registro de Tríadas (Últimas 50 estimaciones)</h2>
+  <div class="table-container">
+    <table id="triads-table">
+      <thead>
+        <tr>
+          <th>Hora (Cálculo)</th>
+          <th>Latitud</th>
+          <th>Longitud</th>
+          <th>T. Nodo A</th>
+          <th>T. Nodo B</th>
+          <th>T. Nodo C</th>
+          <th>Δt máx (s)</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td colspan="7" style="text-align:center">Esperando datos...</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+<details id="formulas">
+  <summary>¿Cómo se calcula la posición estimada del vehículo sumergido?</summary>
+  <div class="formulas-body">
+    <p>Cada nodo de superficie (A/B/C) conoce su propia posición GPS (lat, lon) y mide
+    con un ping acústico su distancia en línea recta al vehículo sumergido
+    (<code>pingDistanceM</code>, ya calculada por el firmware a partir del tiempo de
+    ida y vuelta del sonido).</p>
+
+    <p><strong>1. Conversión de lat/lon a metros locales</strong> (aproximación
+    equirectangular, válida para distancias cortas — hasta unos pocos km), tomando
+    como referencia el punto medio de los nodos usados:</p>
+    <pre>x = (lon - lon_ref) · (π/180) · R · cos(lat_ref · π/180)
+y = (lat - lat_ref) · (π/180) · R
+R = 6 371 000 m (radio terrestre)</pre>
+
+    <p><strong>2. Ecuación de cada nodo</strong> (círculo de posiciones posibles a
+    distancia d<sub>i</sub> de un nodo en (x<sub>i</sub>, y<sub>i</sub>)):</p>
+    <pre>(x - x_i)² + (y - y_i)² = d_i²</pre>
+
+    <p><strong>3. Triangulación</strong>: restando la ecuación del primer nodo a las
+    otras dos se eliminan los términos cuadráticos y queda un sistema lineal de 2
+    ecuaciones con 2 incógnitas (x, y), que se resuelve directamente (o por mínimos
+    cuadrados si hubiera más de 3 nodos). El resultado (x, y) se convierte de vuelta
+    a lat/lon con la fórmula inversa de la del punto 1.</p>
+
+    <p><strong>4. Corrección por profundidad</strong> (opcional): si se conoce la
+    profundidad h del vehículo, la distancia acústica es la hipotenusa de un
+    triángulo rectángulo con la distancia horizontal:</p>
+    <pre>distancia_horizontal = √(max(d² - h², 0))</pre>
+    <p><strong>Importante:</strong> como la profundidad h es la misma para los 3
+    nodos (es la profundidad del vehículo, no la de cada nodo), este término se
+    cancela matemáticamente al restar las ecuaciones entre anclas — así que
+    indicar la profundidad <strong>no cambia la posición horizontal (lat/lon)
+    estimada</strong>. Su única utilidad es poder mostrar/registrar un valor de
+    profundidad real (en vez de "desconocida") en la escena 3D y en el CSV.</p>
+    <p><strong>¿De dónde sale esa profundidad?</strong> Ahora mismo el protocolo
+    acústico ($P/#R) no transmite la profundidad del vehículo, así que no hay
+    ningún dato automático. Por eso este visor la resuelve así, por prioridad:</p>
+    <ol>
+      <li>Si algún nodo reportara <code>pingTargetDepthM</code> (un futuro sensor de
+      profundidad en el vehículo, ya soportado por si se añade), se usa esa.</li>
+      <li>Si no, se usa la <strong>"Profundidad conocida del vehículo"</strong> que
+      escribas arriba (por ejemplo, si la misión programó al vehículo a una
+      profundidad fija que conoces por otro medio).</li>
+      <li>Si tampoco indicas nada, se muestra como "desconocida" en el mapa 3D
+      (con una línea discontinua hacia abajo) y en el CSV.</li>
+    </ol>
+
+    <p><strong>Ventana de sincronización</strong>: el vehículo se mueve, así que los 3
+    pings usados deben haberse producido aproximadamente a la vez — si no, se estaría
+    triangulando con posiciones de nodos válidas pero un vehículo que ya se ha
+    movido de sitio. Por defecto solo se usan pings cuya diferencia de tiempo entre
+    el más antiguo y el más reciente de los 3 no supere la ventana configurada
+    arriba. Puedes desactivar este límite (usar siempre el último ping disponible de
+    cada nodo, aunque haya pasado más tiempo entre ellos) desmarcando la casilla.</p>
+
+    <p><strong>Rango máximo plausible</strong>: la separación real entre los nodos y
+    el vehículo no supera unas pocas decenas de metros en este despliegue; una
+    lectura de ping muy por encima de ese límite se descarta como ruido/eco antes de
+    intentar triangular con ella.</p>
+  </div>
+</details>
+
+<aside id="node-cards">
+  <div class="node-card" id="card-A" data-node="A">
+    <h3><span class="dot" style="background:#e74c3c"></span>Nodo A</h3>
+    <p class="line">Estado: <span class="value" data-field="status">—</span></p>
+    <p class="line">Última posición: <span class="value" data-field="pos">—</span></p>
+    <p class="line">Último ping: <span class="value" data-field="ping">—</span></p>
+  </div>
+  <div class="node-card" id="card-B" data-node="B">
+    <h3><span class="dot" style="background:#2ecc71"></span>Nodo B</h3>
+    <p class="line">Estado: <span class="value" data-field="status">—</span></p>
+    <p class="line">Última posición: <span class="value" data-field="pos">—</span></p>
+    <p class="line">Último ping: <span class="value" data-field="ping">—</span></p>
+  </div>
+  <div class="node-card" id="card-C" data-node="C">
+    <h3><span class="dot" style="background:#3498db"></span>Nodo C</h3>
+    <p class="line">Estado: <span class="value" data-field="status">—</span></p>
+    <p class="line">Última posición: <span class="value" data-field="pos">—</span></p>
+    <p class="line">Último ping: <span class="value" data-field="ping">—</span></p>
+  </div>
+  <div class="node-card" id="card-target">
+    <h3><span class="dot" style="background:#9b59b6"></span>Vehículo sumergido</h3>
+    <p class="line">Posición: <span class="value" data-field="pos">—</span></p>
+    <p class="line">Profundidad: <span class="value" data-field="depth">—</span></p>
+    <p class="line">Anclas usadas: <span class="value" data-field="anchors">—</span></p>
+  </div>
+</aside>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script src="/viewer.js"></script>
+</body>
+</html>
