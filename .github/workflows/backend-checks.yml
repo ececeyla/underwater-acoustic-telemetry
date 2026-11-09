@@ -1,0 +1,39 @@
+name: Backend checks (no hardware)
+on:
+  push:
+    paths:
+      - 'server/**'
+      - 'tools/**'
+      - 'tests/**'
+      - 'ViewerServerV2/server.js'
+      - '.github/workflows/backend-checks.yml'
+  pull_request:
+    paths:
+      - 'server/**'
+      - 'tools/**'
+      - 'tests/**'
+      - 'ViewerServerV2/server.js'
+      - '.github/workflows/backend-checks.yml'
+jobs:
+  offline-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Python syntax and mathematical unit tests
+        run: |
+          python -m compileall -q server tools tests
+          python -m unittest discover -s tests -v
+      - name: Synthetic demo data sanity check
+        run: |
+          python tools/generate_synthetic_logs.py --out-dir server/logs
+          test -s server/logs/A.log
+          test -s server/logs/B.log
+          test -s server/logs/C.log
+      - name: Node.js dashboard syntax
+        run: node --check ViewerServerV2/server.js

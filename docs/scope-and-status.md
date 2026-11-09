@@ -30,3 +30,7 @@ The repository reorganizes an existing UPC/SARTI 2026 underwater acoustic teleme
 - Exact PlatformIO library/version pinning and build checks.
 - Measured current consumption in active/sleep states.
 - Acoustic RTT success-rate studies and GNSS positioning evaluation.
+
+## Portfolio demonstration added in November 2026
+
+An offline demonstration generates three synthetic `server/logs/<NODE>.log` records to exercise the existing Python viewer. These are invented coordinates and idealized acoustic ranges. The test suite covers mathematical and filtering behavior; it **does not** establish real acoustic reply success, localization precision, battery life or full firmware validation. No actual field data was added.

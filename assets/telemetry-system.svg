@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="290" viewBox="0 0 1080 290" role="img" aria-label="Research prototype architecture: three surface nodes and one submerged acoustic node, telemetry server, dashboards">
+  <rect width="1080" height="290" rx="18" fill="#0c172a"/>
+  <text x="30" y="35" font-family="Arial,sans-serif" font-size="22" font-weight="bold" fill="#f3f7ff">Underwater telemetry · experimental architecture</text>
+  <text x="30" y="58" font-family="Arial,sans-serif" font-size="13" fill="#a3b6d0">Hardware / software overview · not a verified field-performance plot</text>
+  <rect x="38" y="86" width="220" height="76" rx="12" fill="#153459" stroke="#588de0"/>
+  <text x="148" y="112" text-anchor="middle" font-family="Arial,sans-serif" font-size="17" font-weight="bold" fill="white">Submerged node</text>
+  <text x="148" y="135" text-anchor="middle" font-family="Arial,sans-serif" font-size="13" fill="#d2e6fa">Acoustic modem · RTT</text>
+  <rect x="322" y="86" width="220" height="76" rx="12" fill="#153459" stroke="#588de0"/>
+  <text x="432" y="112" text-anchor="middle" font-family="Arial,sans-serif" font-size="17" font-weight="bold" fill="white">Surface nodes A/B/C</text>
+  <text x="432" y="135" text-anchor="middle" font-family="Arial,sans-serif" font-size="13" fill="#d2e6fa">ESP32-S3 · GNSS · SIM7080</text>
+  <rect x="606" y="86" width="195" height="76" rx="12" fill="#153459" stroke="#588de0"/>
+  <text x="703" y="112" text-anchor="middle" font-family="Arial,sans-serif" font-size="17" font-weight="bold" fill="white">Telemetry backend</text>
+  <text x="703" y="135" text-anchor="middle" font-family="Arial,sans-serif" font-size="13" fill="#d2e6fa">TCP JSON-line ingestion</text>
+  <rect x="865" y="86" width="180" height="76" rx="12" fill="#153459" stroke="#588de0"/>
+  <text x="955" y="112" text-anchor="middle" font-family="Arial,sans-serif" font-size="17" font-weight="bold" fill="white">Web viewers</text>
+  <text x="955" y="135" text-anchor="middle" font-family="Arial,sans-serif" font-size="13" fill="#d2e6fa">Maps · status · tracks</text>
+  <g stroke="#89c3ff" stroke-width="2.5" fill="none"><path d="M260 124 H320"/><path d="M542 124 H604"/><path d="M801 124 H862"/></g>
+  <g fill="#89c3ff"><path d="M318 124l-9 -6v12z"/><path d="M602 124l-9 -6v12z"/><path d="M860 124l-9 -6v12z"/></g>
+  <text x="290" y="110" text-anchor="middle" fill="#b8d3ef" font-family="Arial,sans-serif" font-size="11">acoustic</text>
+  <text x="573" y="110" text-anchor="middle" fill="#b8d3ef" font-family="Arial,sans-serif" font-size="11">IP data</text>
+  <text x="831" y="110" text-anchor="middle" fill="#b8d3ef" font-family="Arial,sans-serif" font-size="11">HTTP</text>
+  <rect x="322" y="192" width="480" height="55" rx="10" fill="#10253f" stroke="#315779"/>
+  <text x="562" y="213" text-anchor="middle" font-family="Arial,sans-serif" font-size="14" fill="#edf6ff">Trilateration requires valid and time-aligned ranges</text>
+  <text x="562" y="233" text-anchor="middle" font-family="Arial,sans-serif" font-size="12" fill="#96acc8">Synthetic demo is separate from actual field measurements</text>
+</svg>

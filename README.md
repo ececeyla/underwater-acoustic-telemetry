@@ -8,6 +8,8 @@
 
 > This is a **research prototype / internship project**. The repo preserves real project source files, but does **not** claim validated field localization accuracy or reliable acoustic replies in all deployment conditions. It is private while the technical documentation and reproducibility checks are completed.
 
+![Illustrated telemetry architecture](assets/telemetry-system.svg)
+
 ## System architecture
 
 ```mermaid
@@ -46,6 +48,25 @@ This was a broader laboratory project; the presence of a component here does not
 - ESP32 sleep/wake logic and power-management integration in the surface firmware.
 - Python TCP ingestion and browser dashboards for tracking and monitoring.
 - Position estimation using time-aligned ranging measurements and geometric trilateration.
+
+## Offline demonstration — synthetic data only
+
+To explore the Python web viewer **without hardware or private GNSS logs**, generate three clearly fictional surface-node records:
+
+```bash
+python3 tools/generate_synthetic_logs.py --out-dir server/logs
+python3 server/viewer_server.py --host 127.0.0.1 --port 8080
+```
+
+Open [http://localhost:8080](http://localhost:8080). The demo uses three fabricated anchors and an artificial underwater target; it is **not evidence of successful acoustic ranging during the internship**. The generator refuses to overwrite any existing node log. Delete only your locally generated `server/logs/A.log`, `B.log`, and `C.log` if you need to regenerate it.
+
+Run deterministic backend tests with:
+
+```bash
+python3 -m unittest discover -s tests -v
+```
+
+The tests cover coordinate conversion, three-anchor trilateration, degenerate geometry, ping validity filtering and sync-window options. GitHub Actions checks these and JavaScript syntax. **Microcontroller compilation, actual modem communication and measured localization accuracy are outside these tests.**
 
 ## Setup
 
@@ -101,6 +122,7 @@ This is a model approximation: the actual speed of sound depends on water condit
 ## Documentation
 
 - [Scope and test status](docs/scope-and-status.md)
+- [Synthetic offline demo](tools/generate_synthetic_logs.py) and [backend tests](tests/test_viewer_math.py)
 - [Publication and security checklist](docs/publication-checklist.md)
 
 ## Attribution and licensing
