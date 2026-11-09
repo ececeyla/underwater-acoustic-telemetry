@@ -1,0 +1,32 @@
+# Project-local credentials and config files
+SurfaceNode/src/config.h
+SurfaceNode/src/configA.h
+SurfaceNode/src/configB.h
+SurfaceNode/src/configC.h
+SurfaceNode/src/configOLD.h
+SurfaceNode/src/configolllld.h
+**/.env
+**/.env.*
+!**/.env.example
+
+# PlatformIO and C/C++ outputs
+**/.pio/
+**/.vscode/
+**/build/
+*.elf
+*.bin
+*.map
+*.o
+
+# Node.js dependencies
+**/node_modules/
+**/npm-debug.log*
+
+# Telemetry logs, device traces and local data
+server/logs/
+**/*.log
+**/*.bak
+**/*.backup
+.DS_Store
+__pycache__/
+*.pyc
