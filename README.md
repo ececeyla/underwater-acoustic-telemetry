@@ -1,130 +1,102 @@
-# Underwater Acoustic Telemetry and Positioning System
+# Underwater Acoustic Telemetry
 
-**ESP32-S3 firmware, underwater acoustic ranging, GNSS/LTE-M telemetry and web-based monitoring** for an experimental network of surface and submerged nodes.
+**Universitat Politècnica de Catalunya (UPC / SARTI) | Summer 2026**
 
-**Context:** Summer 2026 internship at Universitat Politècnica de Catalunya (UPC), SARTI research group.  
-**Research contributor:** Ece Ceyla Demir · Electrical and Electronics Engineering, Middle East Technical University.  
-**Stack:** C++ / PlatformIO / ESP32-S3, SIM7080G, UART acoustic modem, Python, JavaScript, Node.js, Express.
+**ESP32-S3 · Acoustic ranging · GNSS · LTE-M/NB-IoT · Embedded C++ · Python**
 
-> This is a **research prototype / internship project**. The repo preserves real project source files, but does **not** claim validated field localization accuracy or reliable acoustic replies in all deployment conditions. It is private while the technical documentation and reproducibility checks are completed.
+During my internship at SARTI, I worked on firmware and telemetry for an experimental system with surface and submerged acoustic nodes. The aim was to collect acoustic ranging information, combine it with GNSS positions from the surface nodes, and monitor the system through a local interface.
 
-![Illustrated telemetry architecture](assets/telemetry-system.svg)
+![Surface/submerged telemetry system](assets/telemetry-system.svg)
 
-## System architecture
+## System
 
-```mermaid
-flowchart LR
-    W["Submerged node\nAcoustic modem"] -->|Acoustic ping / RTT| A["Surface Node A\nESP32 + GNSS"]
-    W -->|Acoustic ping / RTT| B["Surface Node B\nESP32 + GNSS"]
-    W -->|Acoustic ping / RTT| C["Surface Node C\nESP32 + GNSS"]
-    A -->|Wi-Fi / cellular telemetry| T["Python TCP telemetry server"]
-    B --> T
-    C --> T
-    T --> D["2D/3D positioning viewer"]
-    A -.-> N["Node.js control dashboard"]
-    B -.-> N
-    C -.-> N
+The setup uses multiple surface nodes and an underwater node.
+
+- **Surface nodes:** LilyGo ESP32-S3 / SIM7080G boards, GNSS, cellular modem, Wi-Fi and acoustic modem UART interface.
+- **Underwater node:** coordinates acoustic ping exchanges and reports ranging information.
+- **Backend:** receives JSON telemetry, stores node logs and performs geometric position calculations.
+- **Web interface:** displays node state, location and ranging-related data.
+
+The system estimates position from valid, time-aligned ranges to surface nodes. Acoustic propagation and modem response reliability affect the result; in the internship tests, acoustic reply behavior remained a point that needed further validation.
+
+## Repository structure
+
+| Directory | Contents |
+| --- | --- |
+| [SurfaceNode](SurfaceNode/) | ESP32-S3 firmware, GNSS and SIM7080G handling, UART modem commands, power control |
+| [SubmergedNode](SubmergedNode/) | Acoustic ping and response handling |
+| [server](server/) | Python telemetry server and 2D/3D positioning viewer |
+| [ViewerServerV2](ViewerServerV2/) | Node.js monitoring and control dashboard |
+| [tests](tests/) | Tests for positioning calculations and telemetry handling |
+| [tools](tools/) | Offline test-log generator |
+
+This was a team research project. The repository collects the software used in the system; it does not imply that every module was written individually by one contributor.
+
+## Firmware setup
+
+The firmware is organized as PlatformIO projects.
+
+1. Open `SurfaceNode/` in PlatformIO.
+2. Copy `SurfaceNode/src/config.example.h` to `SurfaceNode/src/config.h`.
+3. Set your node address, network settings and server destination for your hardware.
+4. Build, upload and inspect serial output or the local `/api/state` endpoint.
+
+The submerged-node project is in `SubmergedNode/`. Its addressing must match the connected surface acoustic modems. Board pinout and network configuration depend on the particular hardware setup.
+
+## Running the viewers
+
+Start the Python receiver and viewer in separate terminals:
+
+```bash
+python3 server/telemetry_server.py --host 127.0.0.1 --port 2100
+python3 server/viewer_server.py --host 127.0.0.1 --port 8080
 ```
 
-The system combines surface coordinates with acoustic round-trip timing to support underwater position estimation. Position estimates are computed only when sufficient valid and suitably time-aligned measurements are available.
+Open `http://127.0.0.1:8080` for the Python viewer.
 
-## Main components
+The alternative dashboard can be started with:
 
-| Directory | Role | Implementation |
-| --- | --- | --- |
-| [SurfaceNode](SurfaceNode/) | GNSS acquisition, acoustic modem interface, cellular/Wi-Fi telemetry, remote controls, power management | ESP32-S3, Arduino/PlatformIO C++ |
-| [SubmergedNode](SubmergedNode/) | Sequential acoustic ping/RTT exchange and payload generation | Arduino/PlatformIO C++ |
-| [server](server/) | Ingest newline-delimited JSON telemetry, store node logs, show 2D/3D tracks and trilateration results | Python standard library; Leaflet / Three.js frontend |
-| [ViewerServerV2](ViewerServerV2/) | Alternative monitoring and node-control dashboard | Node.js / Express / browser UI |
+```bash
+cd ViewerServerV2
+npm install
+npm start
+```
 
-This was a broader laboratory project; the presence of a component here does not imply every line was developed individually by the named contributor. See [project scope and attribution](docs/scope-and-status.md).
+Both interfaces can use port 8080, so run them separately or assign different ports.
 
-## Technical highlights
+## Offline positioning example
 
-- GNSS acquisition and modem state monitoring on the LilyGo T-SIM7080G-S3 family.
-- UART communication with an acoustic modem using ping commands and parsed RTT replies.
-- Multi-node configuration for different surface acoustic addresses.
-- Telemetry batching and configurable GSM/NB-IoT / Wi-Fi communication.
-- ESP32 sleep/wake logic and power-management integration in the surface firmware.
-- Python TCP ingestion and browser dashboards for tracking and monitoring.
-- Position estimation using time-aligned ranging measurements and geometric trilateration.
-
-## Offline demonstration — synthetic data only
-
-To explore the Python web viewer **without hardware or private GNSS logs**, generate three clearly fictional surface-node records:
+To test the viewer without hardware, there is a small **synthetic telemetry dataset generator**:
 
 ```bash
 python3 tools/generate_synthetic_logs.py --out-dir server/logs
 python3 server/viewer_server.py --host 127.0.0.1 --port 8080
 ```
 
-Open [http://localhost:8080](http://localhost:8080). The demo uses three fabricated anchors and an artificial underwater target; it is **not evidence of successful acoustic ranging during the internship**. The generator refuses to overwrite any existing node log. Delete only your locally generated `server/logs/A.log`, `B.log`, and `C.log` if you need to regenerate it.
+It creates three simulated surface anchors with idealized range values. Those records are useful for checking the viewer and trilateration code; they are **not data from the deployed acoustic modems**. The generator will not overwrite existing node logs.
 
-Run deterministic backend tests with:
+Run the backend tests with:
 
 ```bash
 python3 -m unittest discover -s tests -v
 ```
 
-The tests cover coordinate conversion, three-anchor trilateration, degenerate geometry, ping validity filtering and sync-window options. GitHub Actions checks these and JavaScript syntax. **Microcontroller compilation, actual modem communication and measured localization accuracy are outside these tests.**
+The tests exercise coordinate conversion, trilateration and range filtering. They do not replace real modem tests or establish underwater localization accuracy.
 
-## Setup
+## Ranging calculation
 
-### Surface firmware
-1. Install PlatformIO, open the `SurfaceNode` folder, and ensure the relevant LilyGo/ESP32-S3 dependencies are available.
-2. Copy `SurfaceNode/src/config.example.h` to `SurfaceNode/src/config.h`.
-3. Set your own **node ID**, acoustic addresses, APN, Wi-Fi credentials and server destinations. Never commit real credentials.
-4. Build/upload using PlatformIO, then check serial logs and local `/api/state` responses.
-
-The provided `config.example.h` is a privacy-safe **template**, not the actual deployment configuration. Target board pin/peripheral configuration should be verified against the user's exact board revision.
-
-### Submerged firmware
-The source and non-secret `config.h` are in `SubmergedNode/src/`. Update target node addresses to match your surface node deployments and use PlatformIO to build/upload.
-
-### Python receiver and viewer
-From `server/`, run these in separate terminals:
-
-```bash
-python3 telemetry_server.py --host 127.0.0.1 --port 2100
-python3 viewer_server.py --host 127.0.0.1 --port 8080
-```
-
-Open `http://localhost:8080`. For actual network operation, configure the bind address and device destination deliberately; do not expose the receiver to an untrusted network without additional authentication and transport security.
-
-### Alternative dashboard
-From `ViewerServerV2/`:
-
-```bash
-npm install
-npm start
-```
-
-The Node.js control backend assumes devices are reachable on a trusted local network. It is **not** hardened for internet exposure.
-
-## Understanding the measurements
-
-For a round-trip acoustic signal delay `RTT_ms` and assumed sound speed of approximately 1500 m/s:
+For an acoustic round-trip time `RTT_ms` and an assumed sound speed of `1500 m/s`:
 
 ```text
-distance_m = 1500 * RTT_ms / 2000
+range_m = 1500 * RTT_ms / 2000
 ```
 
-This is a model approximation: the actual speed of sound depends on water conditions and modem timing. For 2D trilateration, three valid, non-collinear surface positions and range estimates are needed. An assumed/manual depth is not a measured depth.
+The calculation assumes the reported RTT corresponds to the acoustic travel time. Sound speed varies with water conditions, and modem response delay may require calibration.
 
-## Known limitations
+## Notes
 
-- The repository has **not** been built/tested against live hardware during this GitHub import.
-- Acoustic replies, GNSS fixes, modem network registration and localization performance depend on deployment and configuration.
-- Logs, device credentials and personal network settings have intentionally **not** been uploaded.
-- Documentation and code contain historical node-address variants; check `config.h` and firmware before field use.
-- Local node control APIs and subnet scanning require a **trusted LAN**. No production security certification is claimed.
+The firmware and viewers reflect a research prototype, including device and address variations across development versions. Real-world performance requires consistent device configuration, valid acoustic replies and verified timing.
 
-## Documentation
+Credentials and actual location logs are not included. The web-control interfaces are intended for a **trusted local network**, not an internet-facing service.
 
-- [Scope and test status](docs/scope-and-status.md)
-- [Synthetic offline demo](tools/generate_synthetic_logs.py) and [backend tests](tests/test_viewer_math.py)
-- [Publication and security checklist](docs/publication-checklist.md)
-
-## Attribution and licensing
-
-This work originated in a UPC/SARTI research internship and includes project components and third-party libraries. The original `utilities.h` includes its upstream MIT copyright/license header. No overall redistribution license is declared for the entire research bundle until ownership and licenses are checked.
+See [project scope](docs/scope-and-status.md) for implementation details and [sharing notes](docs/publication-checklist.md) for configuration and security considerations.
