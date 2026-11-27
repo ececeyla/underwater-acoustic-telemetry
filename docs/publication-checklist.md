@@ -1,13 +1,10 @@
 # Configuration, privacy and validation
 
-Before running the project on new hardware:
+- Copy `SurfaceNode/src/config.example.h` to a local, untracked `config.h` and set the APN, network, modem addresses and board configuration.
+- Keep passwords, SIM details, access tokens and real GNSS logs out of version control.
+- Check the firmware dependencies for the exact ESP32-S3 board and PlatformIO environment.
+- Run the dashboards on a trusted local network unless authentication and transport security are added.
 
-- Use `SurfaceNode/src/config.example.h` to prepare a **local**, untracked `config.h`.
-- Review the APN, GNSS commands, modem and sensor addresses, and board pin mapping.
-- Do not commit passwords, SIM details, real GNSS logs, personal IP addresses or access tokens.
-- Check firmware dependencies for the exact ESP32-S3 board and PlatformIO environment.
-- Keep the node dashboards on a trusted local network unless authentication and transport security are added.
+The automated tests cover software logic and sample data. Field testing, battery-life measurements, modem response rates and localization accuracy require hardware validation.
 
-The project repository owner has confirmed approval to share the internship materials. Third-party library notices and collaborator credit should be retained in source files.
-
-The available automated tests validate software logic and sample data. Full field testing, battery-life measurement, modem response rates and localization accuracy remain separate engineering checks.
+Retain third-party library notices and collaborator credit when reusing the source.
